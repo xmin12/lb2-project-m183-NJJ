@@ -8,7 +8,7 @@ Die Applikation wird im Rahmen der LB2 im [Modul 183](https://gitlab.com/ch-tbz-
 
 ## Hinweise zur Installation
 Die Applikation steht als NodeJS-Applikation zur Verfügung. Abhängig davon, ob Sie die LB2 mit NodeJS umsetzen möchten, müssen Sie compose.node.yaml dem Docker-Compose-Befehl mit übergeben:
-* NodeJS: `docker compose -f compose.node.yaml up`
+* NodeJS: `docker compose -f docker/compose.node.merged.yaml up`
 
 Bei NodeJS müssen vor dem Start der Container noch mit `npm install` die Abhängigkeiten installiert werden (wichtig: der Befehl muss innerhalb vom `todo-list-node`-Verzeichnis ausgeführt werden).
 
