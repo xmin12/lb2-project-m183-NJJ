@@ -6,7 +6,7 @@ async function anonymizeUser(userId) {
 
     // Username und Passwort anonymisieren
     const newUsername = `anonymized_user_${userId}`;
-    const newPassword = 'anonymized_password'; // z.B. statischer Wert oder zufälliger Hash
+    const newPassword = 'anonymized_password';
 
     await conn.query(
         `UPDATE users SET username = ?, password = ? WHERE ID = ?`,
