@@ -63,7 +63,7 @@ async function validateLogin (username, password) {
     } catch (err) {
         console.log(err);
     }
-    
+
     return result;
 }
 
@@ -78,7 +78,7 @@ function getHtml() {
         </div>
         <div class="form-group">
             <label for="password">Password</label>
-            <input type="text" class="form-control size-medium" name="password" id="password">
+            <input type="password" class="form-control size-medium" name="password" id="password">
         </div>
         <div class="form-group">
             <label for="submit" ></label>

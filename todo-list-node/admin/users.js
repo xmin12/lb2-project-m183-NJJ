@@ -1,13 +1,22 @@
 const db = require('../fw/db');
+const escapeHtml = require('escape-html');
 
 async function getHtml() {
-    let conn = await db.connectDB();
-    let html = '';
-    let [result, fields] = await conn.query("SELECT users.ID, users.username, users.password, roles.title FROM users inner join permissions on users.ID = permissions.userID inner join roles on permissions.roleID = roles.ID order by username");
+    let conn;
+    try {
+        conn = await db.connectDB();
+        if (!conn) throw new Error('Database connection failed');
 
-    html += `
+        const [result] = await conn.query(`
+            SELECT users.ID, users.username, roles.title 
+            FROM users 
+            INNER JOIN permissions ON users.ID = permissions.userID 
+            INNER JOIN roles ON permissions.roleID = roles.ID 
+            ORDER BY username
+        `);
+
+        let html = `
 <h2>User List</h2>
-
 <table>
     <tr>
         <th>ID</th>
@@ -16,20 +25,27 @@ async function getHtml() {
         <th>Aktion</th>
     </tr>`;
 
-    result.map(function (record) {
-        html += `<tr>
-        <td>` + record.ID + `</td>
-        <td>` + record.username + `</td>
-        <td>` + record.title + `</td>
-        <td><a href="/admin/anonymize?id=` + record.ID + `" onclick="return confirm('User wirklich anonymisieren?')">Anonymisieren</a></td>
-        <input type='hidden' name='password' value='` + record.password + `' />
+        result.forEach(record => {
+            html += `
+    <tr>
+        <td>${escapeHtml(record.ID)}</td>
+        <td>${escapeHtml(record.username)}</td>
+        <td>${escapeHtml(record.title)}</td>
+        <td><a href="/admin/anonymize?id=${escapeHtml(record.ID)}" 
+              onclick="return confirm('User wirklich anonymisieren?')">
+              Anonymisieren
+          </a></td>
     </tr>`;
-    });
+        });
 
-    html += `</table>`;
-
-
-    return html;
+        html += `</table>`;
+        return html;
+    } catch (err) {
+        console.error('Database error:', err);
+        return '<p>Error loading user data</p>';
+    } finally {
+        if (conn) await conn.end();
+    }
 }
 
-module.exports = {html: getHtml()};
+module.exports = { html: getHtml() };
