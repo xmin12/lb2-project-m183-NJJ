@@ -13,7 +13,6 @@ const search = require('./search');
 const searchProvider = require('./search/v2/index');
 const { anonymizeUser } = require('./fw/anonymize');
 
-
 const app = express();
 const PORT = 3000;
 
@@ -30,28 +29,32 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser());
 
-// Routen
-app.get('/', async (req, res) => {
+// Login-Verarbeitung (POST)
+app.post('/login', async (req, res) => {
+    let loginResult = await login.handleLogin(req, res);
+
+    if (loginResult.user.userid !== 0) {
+        login.startUserSession(res, loginResult.user);
+        res.redirect('/');
+    } else {
+        let html = await wrapContent(loginResult.html, req);
+        res.send(html);
+    }
+});
+
+// Startseite
+app.post('/', async (req, res) => {
     if (activeUserSession(req)) {
-        let html = await wrapContent(await index.html(req), req)
+        let html = await wrapContent(await index.html(req), req);
         res.send(html);
     } else {
         res.redirect('login');
     }
 });
 
-app.post('/', async (req, res) => {
-    if (activeUserSession(req)) {
-        let html = await wrapContent(await index.html(req), req)
-        res.send(html);
-    } else {
-        res.redirect('login');
-    }
-})
-
-// edit task
+// Admin-Benutzerseite
 app.get('/admin/users', async (req, res) => {
-    if(activeUserSession(req)) {
+    if (activeUserSession(req)) {
         let html = await wrapContent(await adminUser.html, req);
         res.send(html);
     } else {
@@ -59,7 +62,7 @@ app.get('/admin/users', async (req, res) => {
     }
 });
 
-// edit task
+// Edit Task
 app.get('/edit', async (req, res) => {
     if (activeUserSession(req)) {
         let html = await wrapContent(await editTask.html(req), req);
@@ -69,29 +72,21 @@ app.get('/edit', async (req, res) => {
     }
 });
 
-// Login-Seite anzeigen
+// Login-Seite anzeigen – Nur Formular, keine Logik
 app.get('/login', async (req, res) => {
-    let content = await login.handleLogin(req, res);
-
-    if(content.user.userid !== 0) {
-        // login was successful... set cookies and redirect to /
-        login.startUserSession(res, content.user);
-    } else {
-        // login unsuccessful or not made jet... display login form
-        let html = await wrapContent(content.html, req);
-        res.send(html);
-    }
+    const html = await wrapContent(await login.getHtml(), req);
+    res.send(html);
 });
 
 // Logout
 app.get('/logout', (req, res) => {
     req.session.destroy();
-    res.cookie('username','');
-    res.cookie('userid','');
+    res.cookie('username', '');
+    res.cookie('userid', '');
     res.redirect('/login');
 });
 
-// Profilseite anzeigen
+// Profilseite
 app.get('/profile', (req, res) => {
     if (req.session.loggedin) {
         res.send(`Welcome, ${req.session.username}! <a href="/logout">Logout</a>`);
@@ -100,7 +95,7 @@ app.get('/profile', (req, res) => {
     }
 });
 
-// save task
+// Save Task
 app.post('/savetask', async (req, res) => {
     if (activeUserSession(req)) {
         let html = await wrapContent(await saveTask.html(req), req);
@@ -110,19 +105,19 @@ app.post('/savetask', async (req, res) => {
     }
 });
 
-// search
+// Search
 app.post('/search', async (req, res) => {
     let html = await search.html(req);
     res.send(html);
 });
 
-// search provider
+// Search V2 Provider
 app.get('/search/v2/', async (req, res) => {
     let result = await searchProvider.search(req);
     res.send(result);
 });
 
-// Neue Route für User-Anonymisierung
+// Benutzer anonymisieren
 app.get('/admin/anonymize', async (req, res) => {
     if (!activeUserSession(req)) {
         return res.redirect('/login');
@@ -135,7 +130,7 @@ app.get('/admin/anonymize', async (req, res) => {
 
     try {
         await anonymizeUser(userId);
-        res.redirect('/admin/users');  // Nach Anonymisierung zurück zur Userliste
+        res.redirect('/admin/users');
     } catch (err) {
         console.error(err);
         res.status(500).send('Fehler bei der Anonymisierung');
@@ -147,14 +142,16 @@ app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
+// Hilfsfunktionen
 async function wrapContent(content, req) {
     let headerHtml = await header(req);
-    return headerHtml+content+footer;
+    return headerHtml + content + footer;
 }
 
 function activeUserSession(req) {
-    // check if cookie with user information ist set
     console.log('in activeUserSession');
     console.log(req.cookies);
-    return req.cookies !== undefined && req.cookies.username !== undefined && req.cookies.username !== '';
+    return req.cookies !== undefined &&
+        req.cookies.username !== undefined &&
+        req.cookies.username !== '';
 }
