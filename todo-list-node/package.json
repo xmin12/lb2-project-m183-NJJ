@@ -7,12 +7,12 @@
     "start": "nodemon --legacy-watch app.js"
   },
   "dependencies": {
-    "axios": "^1.7.2",
+    "axios": "^1.13.5",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.5.0",
     "escape-html": "^1.0.3",
-    "express": "^4.17.1",
+    "express": "^4.22.0",
     "express-session": "^1.17.2",
     "mysql2": "^2.3.0",
     "uuid": "^11.1.0"
